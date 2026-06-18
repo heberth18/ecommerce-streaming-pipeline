@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Environment
+.env
+
+# GCP credentials
+secrets/
+*.json
+
+# Spark state
+spark/checkpoint/
+
+# Python
+__pycache__/
+*.pyc
+
+# Terraform (para cuando se agregue al final)
+.terraform/
+terraform.tfvars
