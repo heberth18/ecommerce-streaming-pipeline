@@ -25,5 +25,5 @@ PAYMENT_SCHEMA = StructType([
     StructField("currency",        StringType(),    nullable=False),
     StructField("gateway",         StringType(),    nullable=False),
     StructField("status",          StringType(),    nullable=False),
-    StructField("failure_reason",  StringType(),    nullable=True),   # puede ser null
+    StructField("failure_reason",  StringType(),    nullable=True),
 ])

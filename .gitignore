@@ -226,6 +226,8 @@ secrets/
 
 # Spark state
 spark/checkpoint/
+spark/test_schemas.py
+spark/jars/
 
 # Python
 __pycache__/
@@ -234,3 +236,5 @@ __pycache__/
 # Terraform (para cuando se agregue al final)
 .terraform/
 terraform.tfvars
+
+checkpoint/
