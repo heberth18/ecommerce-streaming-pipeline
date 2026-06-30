@@ -54,8 +54,13 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
-    depends_on:
-      - spark
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-bigquery-datasource
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  grafana_data:
