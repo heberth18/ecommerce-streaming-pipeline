@@ -94,6 +94,55 @@ late_query = (
     .start()
 )
 
+# Same window/watermark pattern as gold_aggregated, but counting DLQ events
+# instead of payment metrics — keeps the DLQ visibility consistent with
+# how the rest of the pipeline measures things.
+dlq_combined = (
+    invalid_stream.withColumn("reason", lit("invalid_schema"))
+    .unionByName(late_events.withColumn("reason", lit("late_arrival")), allowMissingColumns=True)
+)
+
+dlq_aggregated = (
+    dlq_combined
+    .withWatermark("event_timestamp", "2 minutes")
+    .groupBy(
+        window(col("event_timestamp"), "5 minutes"),
+        col("reason")
+    )
+    .count()
+    .withColumnRenamed("count", "event_count")
+)
+
+def write_dlq_metrics_to_bigquery(batch_df, batch_id):
+    if batch_df.isEmpty():
+        return
+
+    output_df = (
+        batch_df
+        .withColumn("window_start", col("window.start"))
+        .withColumn("window_end", col("window.end"))
+        .withColumn("_loaded_at", current_timestamp())
+        .drop("window")
+    )
+
+    (
+        output_df.write
+        .format("bigquery")
+        .option("table", f"{BIGQUERY_DATASET}.dlq_metrics_5min")
+        .option("writeMethod", "direct")
+        .mode("append")
+        .save()
+    )
+
+dlq_metrics_query = (
+    dlq_aggregated.writeStream
+    .foreachBatch(write_dlq_metrics_to_bigquery)
+    .outputMode("update")
+    .trigger(processingTime="60 seconds")
+    .option("checkpointLocation", "checkpoint/dlq_metrics/")
+    .start()
+)
+
 bronze_query = (
     on_time_events.writeStream
     .format("parquet")
@@ -129,6 +178,7 @@ def write_to_bigquery(batch_df, batch_id):
         batch_df
         .withColumn("window_start", col("window.start"))
         .withColumn("window_end", col("window.end"))
+        .withColumn("_loaded_at", current_timestamp())
         .drop("window")
     )
 
